@@ -1,39 +1,61 @@
 import { Component, OnInit } from '@angular/core';
 
 import { ServersService } from '../servers.service';
-import { ActivatedRoute } from '@angular/Router';
+import { ActivatedRoute, Params, Router } from '@angular/Router';
+import { CanComponentDeactivate } from './canDeactivateGuard.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-edit-server',
   templateUrl: './edit-server.component.html',
   styleUrls: ['./edit-server.component.css']
 })
-export class EditServerComponent implements OnInit {
+export class EditServerComponent implements OnInit, CanComponentDeactivate {
   server: {id: number, name: string, status: string};
   serverName = '';
   serverStatus = '';
+  allowEdit = false;
+  changesSaved = false;
 
   constructor(
     private serversService: ServersService,
-    private router:ActivatedRoute
+    private route:ActivatedRoute,
+    private router: Router 
   ) { }
 
   ngOnInit() {
-    console.log(this.router.snapshot.params);
-    console.log(this.router.snapshot.queryParams);
-    console.log(this.router.snapshot.fragment);
+    // console.log(this.route.snapshot.params);
+    // console.log(this.route.snapshot.queryParams);
+    // console.log(this.route.snapshot.fragment);
 
-    this.router.params.subscribe();
-    this.router.queryParams.subscribe();
-    this.router.fragment.subscribe();
-    
-    this.server = this.serversService.getServer(1);
+    // this.route.params.subscribe();
+    this.route.queryParams.subscribe(
+      (queryParams: Params) => {
+        this.allowEdit = queryParams['allowEdit']==='1'? true : false;
+      }
+    );
+    // this.route.fragment.subscribe();
+    var id = +this.route.snapshot.params["id"];
+    this.route.params.subscribe(
+      (data: Params) => {
+        id = +data['id'];
+        console.log(id);
+      }
+    );
+    this.server = this.serversService.getServer(id);
     this.serverName = this.server.name;
     this.serverStatus = this.server.status;
   }
 
   onUpdateServer() {
     this.serversService.updateServer(this.server.id, {name: this.serverName, status: this.serverStatus});
+    this.changesSaved = true;
+    this.router.navigate(['../'], {relativeTo: this.route});
   }
 
+  canDeactivate(): Observable<boolean> | Promise<boolean> | boolean{
+    if( !this.allowEdit ) return true;
+    if( this.serverName !== this.server.name || this.serverStatus !== this.server.status && !this.changesSaved) return confirm("Do you really want to return");
+    else return true;
+  }
 }
