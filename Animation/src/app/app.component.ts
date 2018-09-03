@@ -1,102 +1,155 @@
 import { Component } from '@angular/core';
-import { style, trigger, state, transition, animate } from '@angular/animations';
+import { trigger, state, style, transition, animate, keyframes, group } from '@angular/animations';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   animations: [
-    trigger("divState", [
-      state("normal", style({
-        backgroundColor: "red",
-        transform: "translateX(0px)"
+    // To add animation in an element
+    trigger('divState', [
+      state('normal', style({
+        backgroundColor: 'red',
+        transform: 'translateX(0) rotate(0deg)'
       })),
-      state("highlighted", style({
-        backgroundColor: "blue",
-        transform: "translateX(400px)"
+      state('highlighted', style({
+        backgroundColor: 'blue',
+        transform: 'translateX(300px) rotate(180deg)'
       })),
-      transition("normal <=> highlighted", animate(600)),
-      // transition("highlighted => normal", animate(200))
+      // To achieve animation then hard shift of css
+      transition("normal <=> highlighted", animate(1000))
     ]),
-    trigger("wildState", [
-      state("normal", style({
-        backgroundColor: "red",
-        transform: "translateX(0px)  scale(1)",
-        width: "100px",
-        borderRadius: '0px'
+
+    trigger('wildState', [
+      state('normal', style({
+        backgroundColor: 'red',
+        borderRadius: "0px",
+        transform: 'translateX(0) rotate(0deg) scale(1)'
       })),
-      state("highlighted", style({
-        backgroundColor: "blue",
-        transform: "translateX(200px)  scale(1)",
-        width: "300px",
-        borderRadius: '0px'
+      state('highlighted', style({
+        backgroundColor: 'blue',
+        borderRadius: "0px",
+        transform: 'translateX(300px) rotate(180deg) scale(1)'
       })),
-      state("shrunken", style({
-        backgroundColor: "blue",
-        transform: "translateX(600px) scale(0.5)",
-        width: "100px",
+      state('shrunken', style({
+        backgroundColor: 'green',
+        borderRadius: "5px",
+        transform: 'translateX(0px) rotate(180deg) scale(0.5)'
       })),
-      // Type1
-      // transition("highlighted => normal", animate(200))
-      // transition("normal => highlighted", animate(600)),
-      // Type2
-      // transition("normal <=> highlighted", animate(600)),
-      // Complex transition
-      transition("highlighted <=> normal", animate(200)),
-      // transition("shrunken <=> *", animate(500, style({
-      //   borderRadius: "50px" 
-      // })))
-      transition("shrunken <=> *",[
-        style({
-          backgroundColor: "orange",
-        }),
-        animate(1000, style({
-          borderRadius: '50px'
+      // To achieve animation then hard shift of css
+      transition("normal => highlighted", animate(1000)),
+      transition("highlighted => normal", animate(1000)),
+      transition("shrunken <=> *", 
+      [
+        // style({
+        //   backgroundColor: 'orange'
+        // }),
+        animate(1500, style({
+          backgroundColor: 'orange',
+          borderRadius: "150px"
         })),
+        // animate(500, style({
+        // })),
         animate(500)
       ])
     ]),
-    trigger("list1", [
-      state("in", style({
+// For the list
+    trigger('list1', [
+      state('in', style({
         opacity: 1,
-        transform: "translateX(0px)"
+        transform: 'translateX(0)'
       })),
-      transition(
-        "void => *", [
+      // This animation is from nothing to in state
+      transition('void => *', [
+        // Starting state animation
+        style({
+          opacity: 1,
+          transform: 'translateX(-100px)'
+        }),
+        // animation done in 300 sec from void state to *
+        animate(300)
+      ]),
+      transition('* => void', [
+        // animation done in 300 sec from * to void state
+        // Ending state animation
+        animate(300, style({
+            opacity: 0,
+            transform: 'translateX(100px)'
+        }))
+      ])
+    ]),
+// For the list2
+    trigger('list2', [
+      state('in', style({
+        opacity: 1,
+        transform: 'translateX(0)'
+      })),
+      transition('void => *', [
+        // Adding keyframes
+        animate(500, keyframes([
           style({
+            transform: 'translateX(-100px)', 
             opacity: 0,
-            transform: "translateX(-100px)"
+            offset: 0
           }),
-          animate(200)
-        ]
-      ),
-      transition(
-        "* => void", [
+          style({
+            transform: 'translateX(10px)', 
+            opacity: 1,
+            offset: 0.7
+          }),
+          style({
+            transform: 'translateX(-10px)', 
+            opacity: 1,
+            offset: 0.85
+          }),
+          style({
+            transform: 'translateX(0px)', 
+            opacity: 1,
+            offset: 1
+          })
+        ]))
+      ]),
+      transition('* => void', [
+        group([
           animate(200, style({
+            color: 'red'
+          })),
+          animate(800, style({
             opacity: 0,
-            transform: "translateX(100px)"
+            transform: 'translateX(100px)'
           }))
-        ]
-      ),
+        ])
+      ])
     ])
   ]
 })
 export class AppComponent {
-  state="normal";
-  wildState="normal";
+  // That state will help to achieve animation and its name can be anything to trigger the animation 
+  state = 'normal';
+  wildState = 'normal';
   list = ['Milk', 'Sugar', 'Bread'];
-  
-  onAnimate(){ 
-    this.wildState == "normal" ? this.wildState = "highlighted" : this.wildState = "normal";
-    this.state == "normal" ? this.state = "highlighted" : this.state = "normal";
-  }
-  onShrink(){
-    this.wildState="shrunken";
-  }
+
+  onAnimate(){
+    this.state == "normal" ? this.state = "highlighted": this.state = "normal";
+    this.wildState == "normal" ? this.wildState = "highlighted": this.wildState = "normal";
+  };
+
   onAdd(item) {
     this.list.push(item);
   }
-  
-  onDelete(item){
+
+  onShrink(){
+    this.wildState = 'shrunken';
+  }
+
+  onDelete(item) {
     this.list.splice(this.list.indexOf(item), 1);
+  }
+
+  animationStarted(event){
+    console.log(event);
+  }
+  
+  animationEnded(event){
+    console.log(event);
   }
 }
